@@ -30,7 +30,7 @@ GROUND_COLOR = (222, 184, 135)
 
 # --- Inicialización ---
 pygame.init()
-surface = pygame.display.set_mode((WIDTH, HEIGHT))
+surface = None
 pygame.display.set_caption("Flappy Bird - Minimal")
 clock = pygame.time.Clock()
 font = pygame.font.SysFont(None, 36)

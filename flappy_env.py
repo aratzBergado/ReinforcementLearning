@@ -17,9 +17,10 @@ class FlappyEnv(gym.Env):
             high=np.array([flappy.HEIGHT, 20, flappy.WIDTH, flappy.HEIGHT], dtype=np.float32),
         )
         self.action_space = spaces.Discrete(2)
-
         if render_mode == "human":
-            pygame.display.set_mode((flappy.WIDTH, flappy.HEIGHT))
+            flappy.surface = pygame.display.set_mode((flappy.WIDTH, flappy.HEIGHT))
+        else:
+            flappy.surface = pygame.Surface((flappy.WIDTH, flappy.HEIGHT))
 
     def reset(self, seed=None, options=None):
         flappy.rl_init()
