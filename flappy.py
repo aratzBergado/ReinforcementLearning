@@ -292,5 +292,6 @@ def rl_render():
     return pygame.surfarray.array3d(surface)
 
 if __name__ == '__main__':
+    surface = pygame.display.set_mode((WIDTH, HEIGHT))  
     while True:
         run_game()
