@@ -22,9 +22,11 @@ checkpoint_callback = CheckpointCallback(
     name_prefix="ppo_flappy",
 )
 
+# Charger ou créer le modèle
 if os.path.exists(MODEL_PATH + ".zip"):
     print("existing model loading...")
     model = PPO.load(MODEL_PATH, env=train_env)
+    start_timesteps = model.num_timesteps
 else:
     print("no existing model, creating new...")
     model = PPO(
@@ -39,23 +41,33 @@ else:
         gae_lambda=0.95,
         clip_range=0.2
     )
+    start_timesteps = 0
 
-print("training...")
-model.learn(
-    total_timesteps=TOTAL_TIMESTEPS,
-    callback=checkpoint_callback,
-    progress_bar=True
-)
+# Calculer le nombre de timesteps restant à faire
+remaining_timesteps = max(0, TOTAL_TIMESTEPS - start_timesteps)
 
-model.save(MODEL_PATH)
+if remaining_timesteps > 0:
+    print(f"training from timestep {start_timesteps} / {TOTAL_TIMESTEPS}...")
+    model.learn(
+        total_timesteps=remaining_timesteps,
+        callback=checkpoint_callback,
+        progress_bar=True
+    )
+    model.save(MODEL_PATH)
+    print("model saved.")
+else:
+    print("model already trained for the total timesteps, skipping training.")
+
 train_env.close()
-print("model saved.")
 
+# ---------------------
+# Évaluation
+# ---------------------
 scores = []
 total_rewards = []
 
 for ep in range(10):
-    eval_env = FlappyEnv(render_mode="human", frame_skip=3)
+    eval_env = FlappyEnv(render_mode="human")
     obs, _ = eval_env.reset()
     done = False
     ep_reward = 0
@@ -66,6 +78,7 @@ for ep in range(10):
         obs, reward, done, _, info = eval_env.step(action)
         ep_reward += reward
         ep_score = info.get("score", ep_score)
+        eval_env.render()
 
     eval_env.close()
     scores.append(ep_score)
