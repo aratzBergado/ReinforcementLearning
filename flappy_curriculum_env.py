@@ -28,6 +28,12 @@ class FlappyEnv(gym.Env):
         self.PIPE_GAP = 200
         self.PIPE_SPEED = 1.0
 
+        if self.render_mode == "human":
+            pygame.init()
+            if flappy.surface is None:
+                flappy.surface = pygame.display.set_mode((flappy.WIDTH, flappy.HEIGHT))
+                pygame.display.set_caption("Flappy Bird RL")
+
         # Inicializar superficie solo desde aquí
         #if self.render_mode == "human":
         #    if flappy.surface is None:  # Si aún no existe
@@ -116,6 +122,8 @@ class CurriculumCallback(BaseCallback):
             if ep_reward > self.best_reward:
                 self.best_reward = ep_reward
                 self.best_env_params = {"PIPE_GAP": env.PIPE_GAP, "PIPE_SPEED": env.PIPE_SPEED}
+
+        env.render()
 
         return True
 
