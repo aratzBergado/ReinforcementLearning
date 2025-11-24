@@ -1,0 +1,75 @@
+import os
+import numpy as np
+from stable_baselines3 import PPO
+from stable_baselines3.common.callbacks import CheckpointCallback
+from flappy_env import FlappyEnv
+
+MODEL_PATH = "ppo_flappy"
+
+BEST_PARAMS = {
+    "learning_rate": 1.1445998894919558e-05,
+    "gamma": 0.9087886548031125,
+    "n_steps": 128
+}
+
+TOTAL_TIMESTEPS = 1_000_000
+
+train_env = FlappyEnv(render_mode=None, frame_skip=3)
+
+checkpoint_callback = CheckpointCallback(
+    save_freq=50_000,
+    save_path="./checkpoints/",
+    name_prefix="ppo_flappy",
+)
+
+if os.path.exists(MODEL_PATH + ".zip"):
+    print("existing model loading...")
+    model = PPO.load(MODEL_PATH, env=train_env)
+else:
+    print("no existing model, creating new...")
+    model = PPO(
+        "MlpPolicy",
+        train_env,
+        verbose=1,
+        learning_rate=BEST_PARAMS["learning_rate"],
+        gamma=BEST_PARAMS["gamma"],
+        n_steps=BEST_PARAMS["n_steps"],
+        batch_size=BEST_PARAMS["n_steps"],
+        ent_coef=0.0,
+        gae_lambda=0.95,
+        clip_range=0.2
+    )
+
+print("training...")
+model.learn(
+    total_timesteps=TOTAL_TIMESTEPS,
+    callback=checkpoint_callback,
+    progress_bar=True
+)
+
+model.save(MODEL_PATH)
+train_env.close()
+print("model saved.")
+
+scores = []
+total_rewards = []
+
+for ep in range(10):
+    eval_env = FlappyEnv(render_mode="human", frame_skip=3)
+    obs, _ = eval_env.reset()
+    done = False
+    ep_reward = 0
+    ep_score = 0
+
+    while not done:
+        action, _ = model.predict(obs, deterministic=True)
+        obs, reward, done, _, info = eval_env.step(action)
+        ep_reward += reward
+        ep_score = info.get("score", ep_score)
+
+    eval_env.close()
+    scores.append(ep_score)
+    total_rewards.append(ep_reward)
+    print(f"Episode {ep+1}: score={ep_score}, reward={ep_reward:.2f}")
+
+print(f"\nAverage over 10 episodes: score={np.mean(scores):.2f}, reward={np.mean(total_rewards):.2f}")

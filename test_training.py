@@ -11,14 +11,14 @@ if os.path.exists(MODEL_PATH + ".zip"):
     print("existing model loading...")
     print("training...")
     model = PPO.load(MODEL_PATH, env=train_env)
-    model.learn(total_timesteps=300)
+    model.learn(total_timesteps=50000)
     model.save(MODEL_PATH)
     print("model saved.")
 else:
     print("no model existing, creating new...")
     print("training...")
     model = PPO("MlpPolicy", train_env, verbose=1)
-    model.learn(total_timesteps=300)
+    model.learn(total_timesteps=50000)
     model.save(MODEL_PATH)
     print("model saved.")
 
