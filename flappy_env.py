@@ -4,7 +4,7 @@ import numpy as np
 import pygame
 import flappy
 
-
+ 
 class FlappyEnv(gym.Env):
     metadata = {"render_modes": ["human"], "render_fps": 60}
 
