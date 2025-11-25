@@ -242,12 +242,7 @@ def rl_step(action):
         pipes.pop(0)
 
     brect = bird.get_rect()
-
-    next_pipe = None
     for p in pipes:
-        if next_pipe is None and p.x + PIPE_WIDTH > bird.x:
-            next_pipe = p
-
         if not p.passed and p.x + PIPE_WIDTH < bird.x:
             p.passed = True
             score += 1
@@ -257,13 +252,6 @@ def rl_step(action):
         if p.collides_with(brect):
             reward = -1.0
             game_over = True
-
-    if next_pipe is not None: 
-        center_y = next_pipe.gap_y + PIPE_GAP / 2
-        dy = bird.y - center_y
-        reward_center = max(min(0.1 - 0.1 * abs(dy)/100, 0.1), -0.1)
-        reward += reward_center
-
 
     if bird.y + bird.radius > HEIGHT - GROUND_HEIGHT:
         reward = -1.0
