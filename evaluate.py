@@ -3,7 +3,7 @@ import numpy as np
 from stable_baselines3 import PPO
 from flappy_env import FlappyEnv
 
-def evaluate(model_path="ppo_flappy.zip", num_episodes=5, sleep_time=0.02):
+def evaluate(model_path="ppo_flappy_curriculum.zip", num_episodes=5, sleep_time=0.02):
 
     print(f"[INFO] loading model : {model_path}")
     model = PPO.load(model_path)
