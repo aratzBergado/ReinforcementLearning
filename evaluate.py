@@ -1,54 +1,48 @@
-import flappy as flappy
+import time
 import numpy as np
-import pygame
 from stable_baselines3 import PPO
+from flappy_env import FlappyEnv
 
-# -----------------------------
-# Environnement minimal Flappy
-# -----------------------------
-class FlappyEnv:
-    def __init__(self):
-        pygame.init()
-        if flappy.surface is None:
-            flappy.surface = pygame.display.set_mode((flappy.WIDTH, flappy.HEIGHT))
-            pygame.display.set_caption("Flappy Bird RL")
+def evaluate(model_path="ppo_flappy.zip", num_episodes=5, sleep_time=0.02):
 
-    def reset(self):
-        flappy.rl_init()
-        return np.array(flappy.rl_obs(), dtype=np.float32), {"score": flappy.score}
+    print(f"[INFO] loading model : {model_path}")
+    model = PPO.load(model_path)
+    print("[INFO] loaded.")
 
-    def step(self, action):
-        reward, done = flappy.rl_step(action)
-        obs = np.array(flappy.rl_obs(), dtype=np.float32)
-        info = {"score": flappy.score}
-        return obs, reward, done, False, info
+    env = FlappyEnv(render_mode="human")
+    print("[INFO] env initalized (render=human).")
 
-    def render(self):
-        # Rendu graphique
-        img = flappy.rl_render()
-        img = np.clip(img, 0, 255).astype(np.uint8)
-        pygame.surfarray.blit_array(pygame.display.get_surface(), img)
-        pygame.display.flip()
-        pygame.time.delay(0)
+    episode_rewards = []
 
-
-# -----------------------------
-# Évaluation
-# -----------------------------
-if __name__ == "__main__":
-    model = PPO.load("ppo_flappy_curriculum")
-    env = FlappyEnv()
-    num_episodes = 10
-
-    for ep in range(num_episodes):
+    for ep in range(1, num_episodes + 1):
         obs, info = env.reset()
         done = False
-        total_reward = 0.0
-        while not done:
-            action, _ = model.predict(obs, deterministic=True)
-            obs, reward, done, _, info = env.step(action)
-            total_reward += reward
-            env.render()  # <- ici on voit le jeu
-        print(f"Episode {ep+1}: score={info['score']}, reward={total_reward}")
+        truncated = False
+        ep_reward = 0
 
-    pygame.quit()
+        print(f"\n---- Episode {ep} ----")
+
+        while not (done or truncated):
+            action, _ = model.predict(obs, deterministic=True)
+
+            obs, reward, done, truncated, info = env.step(action)
+            ep_reward += reward
+
+            env.render()
+            time.sleep(sleep_time)
+
+        print(f"→ total Reward episode {ep} = {ep_reward}")
+        episode_rewards.append(ep_reward)
+
+    env.close()
+
+    print("\n=== final result ===")
+    print(f"Mean: {np.mean(episode_rewards):.2f} | Std: {np.std(episode_rewards):.2f}")
+
+    return episode_rewards
+
+
+if __name__ == "__main__":
+    evaluate(
+        num_episodes=10
+    )
