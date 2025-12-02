@@ -20,6 +20,8 @@ FPS = 60
 GRAVITY = 0.45
 JUMP_VELOCITY = -9
 PIPE_WIDTH = 70
+PIPE_GAP_MIN = 130
+PIPE_GAP_MAX = 300
 PIPE_GAP = 300
 PIPE_DISTANCE = 400  # distancia horizontal entre tuberías
 GROUND_HEIGHT = 80
@@ -72,7 +74,11 @@ class Pipe:
         self.passed = False
         # definir hueco vertical aleatorio
         margin = 50
-        self.gap_y = random.randint(margin + 20, HEIGHT - GROUND_HEIGHT - margin - PIPE_GAP)
+        self.gap = random.randint(PIPE_GAP_MIN, PIPE_GAP_MAX)
+        self.gap_y = random.randint(
+            margin + 20,
+            HEIGHT - GROUND_HEIGHT - margin - self.gap
+        )
 
     def update(self, dx):
         self.x -= dx
@@ -82,12 +88,12 @@ class Pipe:
 
     def collides_with(self, rect):
         top_rect = pygame.Rect(self.x, 0, self.width, self.gap_y)
-        bottom_rect = pygame.Rect(self.x, self.gap_y + PIPE_GAP, self.width, HEIGHT - (self.gap_y + PIPE_GAP) - GROUND_HEIGHT)
+        bottom_rect = pygame.Rect(self.x, self.gap_y + self.gap, self.width, HEIGHT - (self.gap_y + self.gap) - GROUND_HEIGHT)
         return rect.colliderect(top_rect) or rect.colliderect(bottom_rect)
 
     def draw(self, surf):
         top_rect = pygame.Rect(int(self.x), 0, self.width, int(self.gap_y))
-        bottom_rect = pygame.Rect(int(self.x), int(self.gap_y + PIPE_GAP), self.width, int(HEIGHT - (self.gap_y + PIPE_GAP) - GROUND_HEIGHT))
+        bottom_rect = pygame.Rect(int(self.x), int(self.gap_y + self.gap), self.width, int(HEIGHT - (self.gap_y + self.gap) - GROUND_HEIGHT))
         pygame.draw.rect(surf, PIPE_COLOR, top_rect)
         pygame.draw.rect(surf, PIPE_COLOR, bottom_rect)
         # "borde" sencillo
