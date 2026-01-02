@@ -26,8 +26,8 @@ A Python project implementing a **minimal version of Flappy Bird** with **reinfo
 1. Clone the repository:
 
 ```bash
-git clone <your_repo_url>
-cd <your_repo>
+git clone https://github.com/aratzBergado/ReinforcementLearning.git
+cd https://github.com/aratzBergado/ReinforcementLearning.git
 ```
 
 2. Install dependencies:
