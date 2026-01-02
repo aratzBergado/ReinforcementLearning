@@ -17,7 +17,6 @@ A Python project implementing a **minimal version of Flappy Bird** with **reinfo
   * [Expected SARSA](#expected-sarsa)
 * [PPO with Stable-Baselines3](#ppo-with-stable-baselines3)
 * [Hyperparameter Tuning with Optuna](#hyperparameter-tuning-with-optuna)
-* [Features](#features)
 * [Code Overview](#code-overview)
 
 ---
@@ -146,19 +145,6 @@ python optuna_tabular.py  # SARSA, ExpectedSARSA, QLearning optimization
 
 * Results saved in `optuna/`
 * Plots generated: `optimization_history.html`, `param_importances.html`, etc.
-
----
-
-## Features
-
-* Minimal Flappy Bird game, playable and customizable
-* `gymnasium`-compatible RL environment
-* Tabular agents: Q-Learning, SARSA, Expected SARSA
-* Deep RL agent: PPO
-* TensorBoard support for monitoring
-* Observation/action discretization wrapper
-* Hyperparameter optimization with Optuna
-* Automatic agent evaluation
 
 ---
 
