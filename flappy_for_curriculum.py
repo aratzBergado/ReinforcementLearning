@@ -9,8 +9,8 @@ FPS = 60
 GRAVITY = 0.45
 JUMP_VELOCITY = -9
 PIPE_WIDTH = 70
-PIPE_GAP_MIN = 130
-PIPE_GAP_MAX = 300
+PIPE_GAP_MIN = 250
+PIPE_GAP_MAX = 350
 PIPE_DISTANCE = 400
 GROUND_HEIGHT = 80
 BG_COLOR = (135, 206, 235)  # ciel
@@ -92,52 +92,55 @@ def draw_ground(surf, offset):
         pygame.draw.rect(surf, (200,150,100), (x, HEIGHT-GROUND_HEIGHT+10, 15, 10))
 
 # --- RL API ---
-def rl_init(pipe_gap=None, pipe_speed=None, pipe_gap_max=None):
+# Dans la fonction rl_init
+def rl_init(pipe_gap=200, pipe_speed=3.0, pipe_gap_max=PIPE_GAP_MAX, pipe_gap_min=PIPE_GAP_MIN):
     global game_state
-    if pipe_gap is None:
-        pipe_gap = 200
-    if pipe_speed is None:
-        pipe_speed = 3.0
-    if pipe_gap_max is None:
-        pipe_gap_max = 300
-
+    
     bird = Bird()
-    pipes = [Pipe(WIDTH + i*PIPE_DISTANCE, random.randint(PIPE_GAP_MIN, pipe_gap_max)) for i in range(3)]
-
+    pipes = [Pipe(WIDTH + i*PIPE_DISTANCE, random.randint(pipe_gap_min, pipe_gap_max)) for i in range(3)]
+    
     game_state = {
         "bird": bird,
         "pipes": pipes,
         "score": 0,
-        "speed": pipe_speed,
+        "base_speed": pipe_speed,
+        "current_speed": pipe_speed,
         "ground_offset": 0,
         "game_over": False,
         "PIPE_GAP": pipe_gap,
-        "PIPE_GAP_MAX": pipe_gap_max
+        "PIPE_GAP_MAX": pipe_gap_max,
+        "PIPE_GAP_MIN": pipe_gap_min
     }
 
+# Dans la fonction rl_step
 def rl_step(action):
     global game_state
     bird = game_state["bird"]
     pipes = game_state["pipes"]
-    speed = game_state["speed"]
+    base_speed = game_state["base_speed"]  # Récupère la vitesse de base
+    current_speed = game_state["current_speed"]  # Vitesse actuelle
     score = game_state["score"]
     ground_offset = game_state["ground_offset"]
     game_over = game_state["game_over"]
     PIPE_GAP = game_state["PIPE_GAP"]
-
+    pipe_gap_min = game_state["PIPE_GAP_MIN"]
+    pipe_gap_max = game_state["PIPE_GAP_MAX"]
+    
     reward = 0.01
     if action == 1:
         bird.jump()
-
+    
     bird.update()
     for p in pipes:
-        p.update(speed)
-
+        p.update(current_speed)  # Utilise la vitesse actuelle
+    
     if pipes[-1].x < WIDTH - PIPE_DISTANCE:
-        pipes.append(Pipe(WIDTH+20, random.randint(PIPE_GAP_MIN, game_state["PIPE_GAP_MAX"])))
+        rand = random.randint(pipe_gap_min, pipe_gap_max)
+        pipes.append(Pipe(WIDTH+20, rand))
+    
     if pipes[0].off_screen():
         pipes.pop(0)
-
+    
     brect = bird.get_rect()
     next_pipe = None
     for p in pipes:
@@ -147,30 +150,32 @@ def rl_step(action):
             p.passed = True
             score += 1
             reward += 1.0
-            speed += 0.05
+            # Augmente seulement la vitesse actuelle, pas la base
+            current_speed += 0.05
         if p.collides_with(brect):
             reward = -1.0
             game_over = True
-
+    
     if next_pipe is not None:
         center_y = next_pipe.gap_y + PIPE_GAP/2
         dy = bird.y - center_y
         reward += max(min(0.1 - 0.1*abs(dy)/100, 0.1), -0.1)
-
+    
     if bird.y + bird.radius > HEIGHT - GROUND_HEIGHT:
         reward = -1.0
         game_over = True
-
-    ground_offset += speed
-
+    
+    ground_offset += current_speed
+    
     game_state.update({
         "score": score,
-        "speed": speed,
+        "current_speed": current_speed,  # Met à jour la vitesse actuelle
         "ground_offset": ground_offset,
         "game_over": game_over
     })
-
+    
     return reward, game_over
+
 
 def rl_obs():
     bird = game_state["bird"]
