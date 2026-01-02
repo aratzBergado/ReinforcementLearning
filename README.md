@@ -1,7 +1,3 @@
-Voici un exemple complet de **README** pour ton projet Flappy Bird avec apprentissage par renforcement. J’ai structuré le document pour inclure à la fois le jeu minimal et les environnements pour les agents RL. Tu peux le copier tel quel dans un fichier `README.md` :
-
----
-
 # Flappy Bird Reinforcement Learning
 
 Un projet Python implémentant un **Flappy Bird minimal** avec **apprentissage par renforcement** (Q-Learning, SARSA, Expected SARSA, PPO). Le projet inclut à la fois un jeu jouable manuellement et un environnement compatible avec `gymnasium` pour entraîner des agents.
