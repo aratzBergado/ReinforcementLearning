@@ -1,6 +1,6 @@
 import os
 from stable_baselines3 import PPO
-from flappy_env import FlappyEnv
+from flappyEnv.flappy_env import FlappyEnv
 import numpy as np
 
 MODEL_PATH = "ppo_flappy"

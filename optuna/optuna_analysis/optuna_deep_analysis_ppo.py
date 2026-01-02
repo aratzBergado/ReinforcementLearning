@@ -4,7 +4,7 @@ import json
 import optuna
 from stable_baselines3 import PPO
 from stable_baselines3.common.evaluation import evaluate_policy
-from flappy_env import FlappyEnv
+from flappyEnv.flappy_env import FlappyEnv
 from optuna.visualization import (
     plot_optimization_history, plot_param_importances,
     plot_slice, plot_parallel_coordinate, plot_contour

@@ -2,7 +2,7 @@ import os
 import numpy as np
 from stable_baselines3 import PPO
 from stable_baselines3.common.callbacks import CheckpointCallback
-from flappy_env import FlappyEnv
+from flappyEnv.flappy_env import FlappyEnv
 
 MODEL_PATH = "ppo_flappy"
 

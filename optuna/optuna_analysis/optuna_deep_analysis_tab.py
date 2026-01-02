@@ -12,7 +12,7 @@ from deustorl.expected_sarsa import ExpectedSarsa
 from deustorl.qlearning import QLearning
 from deustorl.helpers import DiscretizedObservationWrapper
 
-from flappy_env import FlappyEnv
+from flappyEnv.flappy_env import FlappyEnv
 
 from optuna.visualization import (
     plot_optimization_history,

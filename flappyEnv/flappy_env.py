@@ -2,7 +2,7 @@ import gymnasium as gym
 from gymnasium import spaces
 import numpy as np
 import pygame
-import flappy
+import flappyEnv.flappy as flappy
 
  
 class FlappyEnv(gym.Env):

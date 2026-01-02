@@ -4,7 +4,7 @@ import numpy as np
 import pygame
 import os
 
-import flappy_for_curriculum as flappy
+import flappyEnv.flappy_for_curriculum as flappy
 
 from stable_baselines3 import PPO
 from stable_baselines3.common.callbacks import BaseCallback, CheckpointCallback
