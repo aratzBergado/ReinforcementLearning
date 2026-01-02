@@ -168,7 +168,7 @@ python optuna_tabular.py  # SARSA, ExpectedSARSA, QLearning
 
 ---
 
-**Auteur** : Ilies
+**Auteur** : Ilies Abdelsadok, 
 **Date** : 2026-01-02
 **Licence** : MIT
 
