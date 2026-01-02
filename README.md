@@ -1,6 +1,3 @@
-Parfait ! Voici une version complète et professionnelle du **README** en **anglais**, adaptée à ton projet Flappy Bird avec apprentissage par renforcement :
-
----
 
 # Flappy Bird Reinforcement Learning
 
