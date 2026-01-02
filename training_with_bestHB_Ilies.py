@@ -12,7 +12,7 @@ BEST_PARAMS = {
     "n_steps": 128
 }
 
-TOTAL_TIMESTEPS = 1_000_000
+TOTAL_TIMESTEPS = 10_000_000
 
 train_env = FlappyEnv(render_mode=None, frame_skip=3)
 
