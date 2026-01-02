@@ -2,14 +2,21 @@ import gymnasium as gym
 from gymnasium import spaces
 import numpy as np
 import pygame
+import os
+
 import flappy_for_curriculum as flappy
+
 from stable_baselines3 import PPO
-from stable_baselines3.common.callbacks import BaseCallback
-from stable_baselines3.common.vec_env import DummyVecEnv
+from stable_baselines3.common.callbacks import BaseCallback, CheckpointCallback
 from stable_baselines3.common.monitor import Monitor
+from stable_baselines3.common.vec_env import DummyVecEnv
 
 # -----------------------------
-# ENTORNO FLAPPY BIRD
+# variable globale pour la vitesse de départ
+START_SPEED = 1.0
+
+# -----------------------------
+# ENV GYM
 # -----------------------------
 class FlappyEnv(gym.Env):
     metadata = {"render_modes": ["human"], "render_fps": 60}
@@ -18,167 +25,147 @@ class FlappyEnv(gym.Env):
         super().__init__()
         self.render_mode = render_mode
         self.frame_skip = frame_skip
+
         self.observation_space = spaces.Box(
             low=np.array([0, -20, 0, 0], dtype=np.float32),
             high=np.array([flappy.HEIGHT, 20, flappy.WIDTH, flappy.HEIGHT], dtype=np.float32),
         )
         self.action_space = spaces.Discrete(2)
 
-        # Parámetros que se pueden ajustar con curriculum learning
-        self.PIPE_GAP = 200
-        self.PIPE_SPEED = 1.0
-
-        if self.render_mode == "human":
+        if render_mode == "human":
             pygame.init()
             if flappy.surface is None:
-                flappy.surface = pygame.display.set_mode((flappy.WIDTH, flappy.HEIGHT))
-                #pygame.display.set_caption("Flappy Bird RL")
-
-        # Inicializar superficie solo desde aquí
-        #if self.render_mode == "human":
-        #    if flappy.surface is None:  # Si aún no existe
-        #        flappy.surface = pygame.display.set_mode((flappy.WIDTH, flappy.HEIGHT))
-
-        #if render_mode == "human":
-        #    flappy.surface = pygame.display.set_mode((flappy.WIDTH, flappy.HEIGHT))
-        #else:
-        #    flappy.surface = pygame.Surface((flappy.WIDTH, flappy.HEIGHT))
+                flappy.surface = pygame.display.set_mode(
+                    (flappy.WIDTH, flappy.HEIGHT)
+                )
 
     def reset(self, seed=None, options=None):
-        flappy.rl_init(pipe_gap=self.PIPE_GAP, pipe_speed=self.PIPE_SPEED)
-        obs = np.array(flappy.rl_obs(), dtype=np.float32)
-        info = {"score": flappy.game_state["score"]}
-        return obs, info
+        global START_SPEED
+        flappy.rl_init(
+            pipe_speed=START_SPEED,
+            pipe_gap_min=flappy.game_state.get("PIPE_GAP_MIN", 250),
+            pipe_gap_max=flappy.game_state.get("PIPE_GAP_MAX", 350),
+        )
+        print(f"Début d'un nouvel épisode | pipe_speed = {START_SPEED}")
+        return np.array(flappy.rl_obs(), dtype=np.float32), {}
 
     def step(self, action):
-        total_reward = 0.0
+        total_reward = 0
+        done = False
+
         for _ in range(self.frame_skip):
-            reward, done = flappy.rl_step(action)
-            total_reward += reward
+            r, done = flappy.rl_step(action)
+            total_reward += r
             if done:
                 break
-        obs = np.array(flappy.rl_obs(), dtype=np.float32)
-        info = {"score": flappy.game_state["score"]}
-        return obs, total_reward, done, False, info
+
+        return (
+            np.array(flappy.rl_obs(), dtype=np.float32),
+            total_reward,
+            done,
+            False,
+            {"score": flappy.game_state["score"]},
+        )
 
     def render(self):
         if self.render_mode == "human":
             img = flappy.rl_render()
-            img = np.clip(img, 0, 255).astype(np.uint8)
             pygame.surfarray.blit_array(pygame.display.get_surface(), img)
             pygame.display.flip()
-            pygame.time.delay(30)
+
 
 # -----------------------------
-# CALLBACK CURRICULUM
+# CURRICULUM CALLBACK
 # -----------------------------
-#class CurriculumCallback(BaseCallback):
-#    def __init__(self, verbose=1):
-#        super().__init__(verbose)
-#        self.max_speed = 7.0  # velocidad máxima de las tuberías
-
-#    def _on_step(self) -> bool:
-#        # Accedemos al entorno crudo dentro del Monitor y DummyVecEnv
-#        env = self.training_env.envs[0].env  # Monitor -> FlappyEnv
-
-        # Reducir PIPE_GAP progresivamente cada 5000 pasos
-#        if self.num_timesteps % 5000 == 0:
-#            env.PIPE_GAP = max(120, env.PIPE_GAP - 10)
-
-        # Aumentar PIPE_SPEED progresivamente
-#        progress = min(1.0, self.num_timesteps / 50_000)
-#        env.PIPE_SPEED = min(self.max_speed, env.PIPE_SPEED + progress * (self.max_speed - env.PIPE_SPEED))
-
-#        return True
-
 class RewardCurriculumCallback(BaseCallback):
-    def __init__(self, initial_gap=200, min_gap=120,
-                 initial_speed=1.0, max_speed=7.0,
-                 threshold_reward=5, verbose=1):
-        super().__init__(verbose)
-
-        # Parámetros del curriculum
+    def __init__(self, min_gap=130, max_speed=7.0, threshold_reward=150):
+        super().__init__()
         self.min_gap = min_gap
         self.max_speed = max_speed
-
         self.threshold_reward = threshold_reward
-        self.reward_growth = 5  # cada vez que supere el threshold, sube el nivel
-
-        # Para guardar mejor rendimiento
-        self.best_reward = -np.inf
-        self.best_env_params = {}
+        self.reward_growth = 5
+        self.curriculum_speed = 1.0  # vitesse persistante
 
     def _on_step(self) -> bool:
-
-        # Obtener entorno base "pelado"
-        env = self.training_env.envs[0].env
-        while hasattr(env, "env"):
-            env = env.env
-
-        # Si el episodio terminó, Monitor genera "infos" con 'episode'
+        global START_SPEED
         infos = self.locals.get("infos")
-        if infos is not None:
-            for info in infos:
-                if "episode" in info:  # episodio finalizado
-                    ep_reward = info["episode"]["r"]
+        if infos is None:
+            return True
 
-                    # Guardar mejor episodio logrado
-                    if ep_reward > self.best_reward:
-                        self.best_reward = ep_reward
-                        self.best_env_params = {
-                            "PIPE_GAP": env.PIPE_GAP,
-                            "PIPE_SPEED": env.PIPE_SPEED
-                        }
+        for info in infos:
+            if "episode" not in info:
+                continue
 
-                    # ---- CURRICULUM BASADO EN APRENDIZAJE ----
-                    if ep_reward >= self.threshold_reward:
+            ep_reward = info["episode"]["r"]
 
-                        # Reducir gap
-                        if env.game_state["PIPE_GAP_MAX"] > self.min_gap:
-                            env.game_state["PIPE_GAP_MAX"] -= 10
+            if ep_reward >= self.threshold_reward:
+                # augmentation du gap
+                flappy.game_state["PIPE_GAP_MIN"] = max(self.min_gap, flappy.game_state["PIPE_GAP_MIN"] - 5)
+                flappy.game_state["PIPE_GAP_MAX"] = max(self.min_gap, flappy.game_state["PIPE_GAP_MAX"] - 5)
 
+                # augmentation de la vitesse de départ
+                self.curriculum_speed = min(self.max_speed, self.curriculum_speed + 0.1)
+                flappy.game_state["speed"] = self.curriculum_speed
+                START_SPEED = self.curriculum_speed  # mise à jour globale pour le prochain reset
 
-                        # Aumentar velocidad
-                        env.PIPE_SPEED = min(self.max_speed, env.PIPE_SPEED + 0.2)
+                print(f"\nLEVEL UP | reward={ep_reward} "
+                      f"gap=[{flappy.game_state['PIPE_GAP_MIN']}, {flappy.game_state['PIPE_GAP_MAX']}] "
+                      f"speed={flappy.game_state['speed']}")
 
-                        print(f"\n=== NIVEL SUBIDO ===")
-                        print(f"Recompensa del episodio: {ep_reward}")
-                        print(f"Nuevo PIPE_GAP: {env.PIPE_GAP}")
-                        print(f"Nuevo PIPE_SPEED: {env.PIPE_SPEED}")
+                self.threshold_reward += self.reward_growth
 
-                        # Aumentamos el requerimiento para el siguiente nivel
-                        self.threshold_reward += self.reward_growth
-
-        # Render opcional
         env.render()
         return True
 
-    def _on_training_end(self):
-        print("\n=== MEJOR RESULTADO DURANTE EL ENTRENAMIENTO ===")
-        print(f"Máxima recompensa: {self.best_reward}")
-        print(f"Parámetros del entorno: {self.best_env_params}")
-
-
 
 # -----------------------------
-# ENTRENAMIENTO PPO CON CURRICULUM
+# TRAINING
 # -----------------------------
 if __name__ == "__main__":
-    TIMESTEPS = 1_000_000  # puedes ajustar según tu tiempo de prueba
+    TIMESTEPS = 300_000
 
-    # Creamos entorno con render para visualizar
-    #env = FlappyEnv(render_mode="human")
     env = FlappyEnv(render_mode=None)
-    env = Monitor(env)  # <-- Añadido: Monitor para calcular métricas por episodio
-    env = DummyVecEnv([lambda: env])  # necesario para SB3
+    env = Monitor(env)
+    env = DummyVecEnv([lambda: env])
 
-    model = PPO("MlpPolicy", env, verbose=1, learning_rate=3e-4, n_steps=256, gamma=0.99)
+    checkpoint_dir = "./checkpoints"
+    os.makedirs(checkpoint_dir, exist_ok=True)
+
+    checkpoints = [f for f in os.listdir(checkpoint_dir) if f.endswith(".zip")]
+
+    if checkpoints:
+        latest_checkpoint = max(
+            checkpoints,
+            key=lambda x: int(x.split("_")[-2])
+        )
+        print(f"latest checkpoint loading : {latest_checkpoint}")
+        model = PPO.load(
+            os.path.join(checkpoint_dir, latest_checkpoint),
+            env=env
+        )
+    else:
+        print("No checkpoint found. Starting from scratch")
+        model = PPO(
+            "MlpPolicy",
+            env,
+            verbose=1,
+            learning_rate=3e-4,
+            n_steps=256,
+            gamma=0.99,
+        )
 
     curriculum_callback = RewardCurriculumCallback()
 
-    model.learn(total_timesteps=TIMESTEPS, callback=curriculum_callback)
+    checkpoint_callback = CheckpointCallback(
+        save_freq=10_000,
+        save_path=checkpoint_dir,
+        name_prefix="flappy_curriculum",
+    )
 
-    # Guardamos modelo
+    model.learn(
+        total_timesteps=TIMESTEPS,
+        callback=[curriculum_callback, checkpoint_callback],
+    )
+
     model.save("ppo_flappy_curriculum")
-
     env.close()
