@@ -49,7 +49,7 @@ export PYTHONPATH=$(pwd):$PYTHONPATH
 To play Flappy Bird manually:
 
 ```bash
-python flappy_bird.py
+python flappyEnv/flappy.py
 ```
 
 **Controls:**
