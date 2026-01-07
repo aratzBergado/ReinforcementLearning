@@ -1,5 +1,3 @@
-#run export PYTHONPATH=/home/rl/miniconda3/rl/ReinforcementLearning:$PYTHONPATH before executing
-
 import os
 import random
 import json
@@ -83,4 +81,4 @@ plot_slice(study).write_html(f"{full_study_dir_path}/slice.html")
 plot_parallel_coordinate(study).write_html(f"{full_study_dir_path}/parallel.html")
 plot_contour(study).write_html(f"{full_study_dir_path}/contour.html")
 
-print("Plots générés. Vérifie le dossier optuna/FlappyPPO/")
+print("Plots generated. Check the folder of optuna/FlappyPPO/")

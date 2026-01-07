@@ -44,4 +44,4 @@ plot_slice(study).write_html(f"{full_study_dir_path}/slice.html")
 plot_parallel_coordinate(study).write_html(f"{full_study_dir_path}/parallel.html")
 plot_contour(study).write_html(f"{full_study_dir_path}/contour.html")
 
-print("Plots générés. Vérifie le dossier optuna/FlappyPPO/")
+print("Plots generated. Check the optunaPlots folder. Plots generated in optuna/FlappyPPO/")

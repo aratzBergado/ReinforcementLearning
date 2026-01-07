@@ -4,7 +4,7 @@ from stable_baselines3 import PPO
 from stable_baselines3.common.callbacks import CheckpointCallback
 from flappyEnv.flappy_env import FlappyEnv
 
-MODEL_PATH = "ppo_flappy"
+MODEL_PATH = "ppo_flappy_tensorboard"
 
 BEST_PARAMS = {
     "learning_rate": 1.1445998894919558e-05,
@@ -22,7 +22,7 @@ checkpoint_callback = CheckpointCallback(
     name_prefix="ppo_flappy",
 )
 
-# Charger ou créer le modèle
+# Load or create the model
 if os.path.exists(MODEL_PATH + ".zip"):
     print("existing model loading...")
     model = PPO.load(MODEL_PATH, env=train_env)
@@ -39,11 +39,12 @@ else:
         batch_size=BEST_PARAMS["n_steps"],
         ent_coef=0.0,
         gae_lambda=0.95,
-        clip_range=0.2
+        clip_range=0.2,
+        tensorboard_log="./logs/flappy_bestHB/"
     )
     start_timesteps = 0
 
-# Calculer le nombre de timesteps restant à faire
+# Calculate the number of remaining timesteps
 remaining_timesteps = max(0, TOTAL_TIMESTEPS - start_timesteps)
 
 if remaining_timesteps > 0:
@@ -51,7 +52,8 @@ if remaining_timesteps > 0:
     model.learn(
         total_timesteps=remaining_timesteps,
         callback=checkpoint_callback,
-        progress_bar=True
+        progress_bar=True,
+        tb_log_name="bestHB"
     )
     model.save(MODEL_PATH)
     print("model saved.")

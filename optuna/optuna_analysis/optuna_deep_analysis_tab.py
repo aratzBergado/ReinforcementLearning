@@ -1,5 +1,3 @@
-#run export PYTHONPATH=/home/rl/miniconda3/rl/ReinforcementLearning:$PYTHONPATH before executing
-
 import os
 import random
 import json

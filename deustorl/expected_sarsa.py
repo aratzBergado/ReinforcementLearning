@@ -49,7 +49,7 @@ class ExpectedSarsa:
                 obs,_ = self.env.reset()
                 selected_action = policy(self.q_table[obs])
                 
-                # lrdacay update
+                # lrdaecay update
                 n_episodes += 1
                 if n_episodes % n_episodes_decay == 0:
                     lr *= lrdecay

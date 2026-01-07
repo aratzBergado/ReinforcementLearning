@@ -13,7 +13,7 @@ PIPE_GAP_MIN = 250
 PIPE_GAP_MAX = 350
 PIPE_DISTANCE = 400
 GROUND_HEIGHT = 80
-BG_COLOR = (135, 206, 235)  # ciel
+BG_COLOR = (135, 206, 235)  # sky
 BIRD_COLOR = (255, 255, 0)
 PIPE_COLOR = (34, 139, 34)
 GROUND_COLOR = (222, 184, 135)
@@ -83,7 +83,7 @@ class Pipe:
         pygame.draw.rect(surf, (0,0,0), top_rect, 2)
         pygame.draw.rect(surf, (0,0,0), bottom_rect, 2)
 
-# --- Fonctions utilitaires ---
+# --- Utility functions ---
 def draw_ground(surf, offset):
     rect = pygame.Rect(0, HEIGHT-GROUND_HEIGHT, WIDTH, GROUND_HEIGHT)
     pygame.draw.rect(surf, GROUND_COLOR, rect)
@@ -92,7 +92,7 @@ def draw_ground(surf, offset):
         pygame.draw.rect(surf, (200,150,100), (x, HEIGHT-GROUND_HEIGHT+10, 15, 10))
 
 # --- RL API ---
-# Dans la fonction rl_init
+
 def rl_init(pipe_gap=200, pipe_speed=3.0, pipe_gap_max=PIPE_GAP_MAX, pipe_gap_min=PIPE_GAP_MIN):
     global game_state
     
@@ -112,13 +112,13 @@ def rl_init(pipe_gap=200, pipe_speed=3.0, pipe_gap_max=PIPE_GAP_MAX, pipe_gap_mi
         "PIPE_GAP_MIN": pipe_gap_min
     }
 
-# Dans la fonction rl_step
+
 def rl_step(action):
     global game_state
     bird = game_state["bird"]
     pipes = game_state["pipes"]
-    base_speed = game_state["base_speed"]  # Récupère la vitesse de base
-    current_speed = game_state["current_speed"]  # Vitesse actuelle
+    base_speed = game_state["base_speed"]  # Get the base speed
+    current_speed = game_state["current_speed"]  # Actual speed
     score = game_state["score"]
     ground_offset = game_state["ground_offset"]
     game_over = game_state["game_over"]
@@ -132,7 +132,7 @@ def rl_step(action):
     
     bird.update()
     for p in pipes:
-        p.update(current_speed)  # Utilise la vitesse actuelle
+        p.update(current_speed)  # Use the current speed
     
     if pipes[-1].x < WIDTH - PIPE_DISTANCE:
         rand = random.randint(pipe_gap_min, pipe_gap_max)
@@ -150,7 +150,7 @@ def rl_step(action):
             p.passed = True
             score += 1
             reward += 1.0
-            # Augmente seulement la vitesse actuelle, pas la base
+            # Only increases the current speed, not the base
             current_speed += 0.05
         if p.collides_with(brect):
             reward = -1.0
@@ -169,7 +169,7 @@ def rl_step(action):
     
     game_state.update({
         "score": score,
-        "current_speed": current_speed,  # Met à jour la vitesse actuelle
+        "current_speed": current_speed,  # Update the current speed
         "ground_offset": ground_offset,
         "game_over": game_over
     })
@@ -213,7 +213,7 @@ def rl_render():
     draw_ground(surface, ground_offset)
     return pygame.surfarray.array3d(surface)
 
-# --- Jeu classique ---
+# --- Classic game ---
 def run_game():
     rl_init()
     while True:
@@ -234,7 +234,7 @@ def run_game():
                     else:
                         rl_init()
 
-        rl_step(0)  # mise à jour sans action
+        rl_step(0)  # update without action
         rl_render()
         pygame.display.flip()
 

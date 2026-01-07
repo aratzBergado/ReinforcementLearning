@@ -1,15 +1,3 @@
-"""
-Flappy Bird minimal en Python usando pygame
-Guarda este archivo como flappy_bird.py y ejecútalo con:
-  pip install pygame
-  python flappy_bird.py
-
-Controles:
- - Barra espaciadora o clic izquierdo: saltar
- - R o clic en pantalla cuando estés en Game Over: reiniciar
-
-Código simple y comentado para facilitar modificaciones.
-"""
 import pygame
 import random
 import sys
