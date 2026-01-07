@@ -3,7 +3,7 @@ import numpy as np
 from stable_baselines3 import PPO
 from flappyEnv.flappy_env import FlappyEnv
 
-def evaluate(model_path="model/ppo_flappy_curriculum", num_episodes=5, sleep_time=0.02):
+def evaluate(model_path="ppo_flappy_curriculum_tensorboard", num_episodes=5, sleep_time=0.02):
 
     print(f"[INFO] loading model : {model_path}")
     model = PPO.load(model_path)
