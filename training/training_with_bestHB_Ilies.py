@@ -4,7 +4,7 @@ from stable_baselines3 import PPO
 from stable_baselines3.common.callbacks import CheckpointCallback
 from flappyEnv.flappy_env import FlappyEnv
 
-MODEL_PATH = "ppo_flappy_tensorboard"
+MODEL_PATH = "ppo_flappy"
 
 BEST_PARAMS = {
     "learning_rate": 1.1445998894919558e-05,

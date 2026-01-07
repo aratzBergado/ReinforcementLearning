@@ -169,5 +169,5 @@ if __name__ == "__main__":
         tb_log_name="run_curriculum" 
     )
 
-    model.save("ppo_flappy_curriculum_tensorboard")
+    model.save("ppo_flappy_curriculum")
     env.close()
