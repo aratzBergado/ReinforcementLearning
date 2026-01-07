@@ -12,7 +12,7 @@ from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.vec_env import DummyVecEnv
 
 # -----------------------------
-# variable globale pour la vitesse de départ
+#  global variable for starting speed
 START_SPEED = 1.0
 
 # -----------------------------
@@ -46,7 +46,7 @@ class FlappyEnv(gym.Env):
             pipe_gap_min=flappy.game_state.get("PIPE_GAP_MIN", 250),
             pipe_gap_max=flappy.game_state.get("PIPE_GAP_MAX", 350),
         )
-        print(f"Début d'un nouvel épisode | pipe_speed = {START_SPEED}")
+        print(f"Start of a new episode | pipe_speed = {START_SPEED}")
         return np.array(flappy.rl_obs(), dtype=np.float32), {}
 
     def step(self, action):
@@ -84,7 +84,7 @@ class RewardCurriculumCallback(BaseCallback):
         self.max_speed = max_speed
         self.threshold_reward = threshold_reward
         self.reward_growth = 5
-        self.curriculum_speed = 1.0  # vitesse persistante
+        self.curriculum_speed = 1.0  # velocidad persistent
 
     def _on_step(self) -> bool:
         global START_SPEED
@@ -99,14 +99,14 @@ class RewardCurriculumCallback(BaseCallback):
             ep_reward = info["episode"]["r"]
 
             if ep_reward >= self.threshold_reward:
-                # augmentation du gap
+                # aumentation of the gap
                 flappy.game_state["PIPE_GAP_MIN"] = max(self.min_gap, flappy.game_state["PIPE_GAP_MIN"] - 5)
                 flappy.game_state["PIPE_GAP_MAX"] = max(self.min_gap, flappy.game_state["PIPE_GAP_MAX"] - 5)
 
-                # augmentation de la vitesse de départ
+                # aumentation of the starting speed
                 self.curriculum_speed = min(self.max_speed, self.curriculum_speed + 0.1)
                 flappy.game_state["speed"] = self.curriculum_speed
-                START_SPEED = self.curriculum_speed  # mise à jour globale pour le prochain reset
+                START_SPEED = self.curriculum_speed  # global update for the next reset
 
                 print(f"\nLEVEL UP | reward={ep_reward} "
                       f"gap=[{flappy.game_state['PIPE_GAP_MIN']}, {flappy.game_state['PIPE_GAP_MAX']}] "
@@ -152,6 +152,7 @@ if __name__ == "__main__":
             learning_rate=3e-4,
             n_steps=256,
             gamma=0.99,
+            tensorboard_log="./logs/flappy_curriculum/"
         )
 
     curriculum_callback = RewardCurriculumCallback()
@@ -165,7 +166,8 @@ if __name__ == "__main__":
     model.learn(
         total_timesteps=TIMESTEPS,
         callback=[curriculum_callback, checkpoint_callback],
+        tb_log_name="run_curriculum" 
     )
 
-    model.save("ppo_flappy_curriculum")
+    model.save("ppo_flappy_curriculum_tensorboard")
     env.close()
