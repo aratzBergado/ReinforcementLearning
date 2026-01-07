@@ -161,4 +161,5 @@ python optuna_tabular.py  # SARSA, ExpectedSARSA, QLearning optimization
 ---
 
 **Author:** Ilies Abdelsadok, Aratz Bergado, Natalia Gonzalez, Naroa Manterola
+
 **Date:** 2026-01-07
